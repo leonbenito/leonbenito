@@ -1,0 +1,23 @@
+---
+title: "Economics"
+---
+
+While my Economics training is at an early stage, I like to explore data to expand my understanding of the economy. Here, you will find several examples that combine macro with data science.
+
+**Monetary Policy**
+
+In 2017, BoE Governor Mark Carney gave a [speech titled 'Lambda'](https://www.bankofengland.co.uk/speech/2017/lambda) describing how BoE policy had been confronted with a trade-off between returning inflation to the inflation target and stabilising output and how the Bank's Monetary Policy Committee (MPC) confronted that trade-off.
+
+In this note, I replicate and update parts of Governor Carney's analysis. The period since Governor Carney's speech has been marked by further episodes that imply a macro trade-off between reaching the inflation target and output stabilisation.
+
+I draw on the fact that every three months since being made independent of the Government in 1997, the [Bank of England](https://www.bankofengland.co.uk/) has provided forecasts for how it expects the UK economy to evolve.
+
+-   Data analysis of [Lambda](Lambda.html)
+
+**Fiscal Policy**
+
+The UK faces an important fiscal challenge -- to stabilise and bring down debt, provide good public services and support economic growth.
+
+Since its creation in 2010, the [Office for Budget Responsibility (OBR)](https://obr.uk/) has produced forecasts of the UK macro economy alongside each major fiscal event, including Budget.
+
+In this Note, I provide a simple overview of UK [fiscal policy](fiscal-summary.html)

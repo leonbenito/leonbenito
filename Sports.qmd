@@ -1,0 +1,12 @@
+---
+title: "Sports analytics"
+format: html
+---
+
+Sports analytics is revolutionising sport, including football. It affects every aspect of getting the best sporting performances from a team by using statistical analysis: recruiting the best players and selecting the best team for each match, achieving peak fitness as well as on-the-field tactics -- without losing the magic of each unique and spontaneous football match.
+
+Liverpool FC won the English Premiership in 2019/20 and in 2024/25, two of the greatest seasons ever.
+
+## Some analysis
+
+- [Premier league 2019/20](EPL201920.html)

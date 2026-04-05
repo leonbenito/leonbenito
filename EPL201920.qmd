@@ -1,0 +1,564 @@
+---
+title: "Data Analysis and the English 2019/20 Premier League Season"
+author: "Leon Benito"
+date: today
+date-format: "MMMM D, YYYY"
+format:
+  html:
+    toc: true
+    toc-location: left
+    number-sections: true
+    code-fold: true
+    code-tools: true
+    theme: spacelab
+    highlight-style: tango
+    embed-resources: true
+    fig-width: 8
+    fig-height: 8
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r setup}
+#| include: false
+
+invisible(lapply(c("tidyverse", "here", "readxl", "DT", "ggimage", 
+                   "ggcorrplot", "ggrepel", "patchwork", "knitr",
+                   "gt", "gtExtras", "showtext"), 
+                 library, character.only = TRUE))
+
+font_add_google("Roboto Condensed", "roboto")
+showtext_auto()
+
+```
+
+# Introduction
+
+No statistical analysis can do justice to the excitement of the 2019/20 Premier League season. Without any coincidence, the season was won by Liverpool. Here, I analyse match data from every teams' matches, capturing results, aspects of performance including both attack and defense, as well as discipline. Liverpool were unsurpassed in almost every dimension. On 99 points for the season, Liverpool, beat Manchester City by 18 points and the third and fourth placed teams by 33 points.
+
+# The raw data
+
+After importing the raw data, the first task is to present some basic summary statistics on the structure of the dataframe and its contents.
+
+The table below 'glimpses' the dataframe itself. I then summarise some basic summary statistics.
+
+```{r}
+df <- read_excel(here("data", "premierLeague.xlsx")) 
+
+glimpse(df)
+print(paste("No of observations: ", nrow(df)))
+print(paste("No of variables: ", ncol(df)))
+
+```
+
+The `r nrow(df)` observations in the dataframerefer to match-level data for the 2019/20 season: each of 20 teams playing 38 matches in the season. For each match, we have a total of `r ncol(df)` variables.
+
+# Some simple correlations
+
+A useful next stage is to inspect correlations among the 24 numeric variables. These correlations are shown below.
+
+Not surprisingly, 'possession' indicators (possession, touches, passes, successful passes, corners, crosses) are positively correlated. These tend to be are negatively correlated with saves, clearances and goal kicks (defensive acts).
+
+```{r}
+# Calculate correlation matrix
+cor_matrix <- df %>% 
+  select_if(is.numeric) %>% 
+  select(-Penalties) %>%
+  cor(use = "complete.obs")
+
+# Create improved correlation plot
+ggcorrplot(cor_matrix,
+           method = "square",
+           type = "upper",
+           lab = FALSE,
+           colors = c("#8B4513", "#FFFAF0", "#006400"),  # Stronger contrast
+           outline.color = "gray60",
+           ggtheme = theme_minimal(base_family = "roboto"),
+           legend.title = "Correlation") +
+  theme(
+    text = element_text(family = "roboto"),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, 
+                               size = 12, family = "roboto", face = "bold"),
+    axis.text.y = element_text(angle = 0, hjust = 1, 
+                               size = 12, family = "roboto", face = "bold"),
+    legend.text = element_text(family = "roboto", size = 11),
+    legend.title = element_text(family = "roboto", size = 12, face = "bold"),
+    panel.grid.major = element_blank(),
+    plot.margin = margin(10, 10, 10, 20)
+  )
+```
+
+# Performance
+
+## The league table
+
+The measure of performance that ultimately matters is the position of the table at the end of the season. That said, the excitement is in the journey of getting there.
+
+```{r}
+league_table <- df %>%
+  group_by(Match_Name) %>%
+  mutate(
+    OpponentScore = ifelse(row_number() == 1, Score[2], Score[1]),
+    Result = case_when(
+      Score > OpponentScore ~ "W",
+      Score < OpponentScore ~ "L",
+      Score == OpponentScore ~ "D"
+    )
+  ) %>%
+  ungroup() %>%
+  group_by(Team) %>%
+  summarise(
+    Played = n(),
+    Won = sum(Result == "W"),
+    Drawn = sum(Result == "D"),
+    Lost = sum(Result == "L"),
+    GF = sum(Score),
+    GA = sum(OpponentScore)
+  ) %>%
+  mutate(
+    GD = GF - GA,
+    Points = (Won * 3) + Drawn
+  ) %>%
+  arrange(desc(Points), desc(GD), desc(GF)) %>%
+  mutate(Position = row_number()) %>%
+  select(Position, Team, Played, Won, Drawn, Lost, GF, GA, GD, Points)
+
+# Display as formatted table
+league_table %>%
+  gt() %>%
+  tab_header(
+    title = md("**Premier League 2019/20 Final Table**")
+  ) %>%
+  opt_table_font(font = google_font("Roboto Condensed")) %>%
+  tab_options(
+    table.font.size = 11,
+    heading.title.font.size = 14,
+    data_row.padding = px(3),
+    column_labels.padding = px(4),
+    table.width = pct(85)
+  ) %>%
+  cols_align(
+    align = "center",
+    columns = c(Position, Played, Won, Drawn, Lost, GF, GA, GD, Points)
+  ) %>%
+  cols_align(
+    align = "left",
+    columns = Team
+  ) %>%
+  tab_style(
+    style = cell_fill(color = "#C8E6C9"),
+    locations = cells_body(rows = Position <= 4)
+  ) %>%
+  tab_style(
+    style = cell_fill(color = "#E8F5E9"),
+    locations = cells_body(rows = Position == 5)
+  ) %>%
+  tab_style(
+    style = cell_fill(color = "#FFCDD2"),
+    locations = cells_body(rows = Position >= 18)
+  ) %>%
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_body(columns = c(Position, Team, Points))
+  )
+
+```
+
+### Attacking statistics
+
+```{r}
+df %>%
+  select(Team, contains("Shot")) %>%
+  group_by(Team) %>%
+  summarise(across(everything(), ~mean(., na.rm = TRUE))) %>%
+  arrange(desc(ShotsAccuracy)) %>%
+  gt() %>%
+  tab_header(
+    title = "Attacking Statistics, by Team",
+    subtitle = "Premier League 2019/20"
+  ) %>%
+  fmt_number(
+    columns = where(is.numeric),
+    decimals = 3
+  ) %>%
+  opt_table_font(font = google_font("Roboto Condensed")) %>%
+  tab_options(
+    table.font.size = 11,
+    heading.title.font.size = 14,
+    heading.subtitle.font.size = 11,
+    data_row.padding = px(3),
+    column_labels.padding = px(4),
+    table.width = pct(80)
+  ) %>%
+  cols_align(
+    align = "center",
+    columns = where(is.numeric)
+  )
+
+
+```
+
+## Shot and save accuracy
+
+Shot and save accuracy are standard measures in football sports analytics as an intermediate measure of how team performance.
+
+```{r}
+
+# Create data
+team_accuracy <- df %>%
+  select(Team, ShotsAccuracy, SavesAccuracy) %>%
+  group_by(Team) %>%
+  summarise(
+    ShotsAccuracy = round(mean(ShotsAccuracy, na.rm = TRUE), 3),
+    SavesAccuracy = round(mean(SavesAccuracy, na.rm = TRUE), 3)
+  ) %>%
+  arrange(desc(ShotsAccuracy))
+
+# Display as formatted table
+team_accuracy %>%
+  gt() %>%
+  tab_header(
+    title = md("**Shot and Save Accuracy by Team**"),
+    subtitle = "Premier League 2019/20"
+  ) %>%
+  opt_table_font(font = google_font("Roboto Condensed")) %>%
+  tab_options(
+    table.font.size = 10,
+    heading.title.font.size = 13,
+    heading.subtitle.font.size = 10,
+    data_row.padding = px(2),
+    column_labels.padding = px(3),
+    table.width = pct(70),
+    heading.padding = px(4)
+  ) %>%
+  cols_width(
+    Team ~ px(150),
+    ShotsAccuracy ~ px(120),
+    SavesAccuracy ~ px(120)
+  ) %>%
+  cols_align(
+    align = "center",
+    columns = c(ShotsAccuracy, SavesAccuracy)
+  ) %>%
+  cols_align(
+    align = "left",
+    columns = Team
+  ) %>%
+  cols_label(
+    ShotsAccuracy = "Shot Accuracy",
+    SavesAccuracy = "Save Accuracy"
+  ) %>%
+  fmt_number(
+    columns = c(ShotsAccuracy, SavesAccuracy),
+    decimals = 3
+  )
+
+# Plot 
+ggplot(team_accuracy, aes(x = ShotsAccuracy, y = SavesAccuracy)) +
+  geom_hline(yintercept = mean(team_accuracy$SavesAccuracy), 
+             linetype = "dashed", color = "gray60", alpha = 0.7) +
+  geom_vline(xintercept = mean(team_accuracy$ShotsAccuracy), 
+             linetype = "dashed", color = "gray60", alpha = 0.7) +
+  geom_point(size = 4, color = "#2D5F4F", alpha = 0.8) +
+  geom_label_repel(aes(label = Team), 
+                   size = 3.5,
+                   box.padding = 0.5,
+                   point.padding = 0.3,
+                   segment.color = "grey50",
+                   segment.size = 0.3,
+                   fill = "white",
+                   alpha = 0.85,
+                   max.overlaps = Inf,
+                   family = "roboto") +
+  scale_x_continuous(expand = expansion(mult = 0.1),
+                     breaks = scales::pretty_breaks(n = 8)) +
+  scale_y_continuous(expand = expansion(mult = 0.1),
+                     breaks = scales::pretty_breaks(n = 8)) +
+  labs(title = "Shot Accuracy vs Save Accuracy by Team",
+       subtitle = "Premier League 2019/20 | Dashed lines show league averages",
+       x = "Shot Accuracy",
+       y = "Save Accuracy") +
+  theme(base_family = "roboto") +
+  theme(
+    text = element_text(family = "roboto"),
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 15, family = "roboto"),
+    plot.subtitle = element_text(hjust = 0.5, size = 10, family = "roboto", color = "gray40"),
+    axis.title = element_text(face = "bold", size = 12, family = "roboto"),
+    axis.text = element_text(size = 11, family = "roboto"),
+    axis.line = element_line(color = "gray30", linewidth = 0.5),
+    axis.ticks = element_line(color = "gray30", linewidth = 0.3),
+    axis.ticks.length = unit(0.15, "cm"),
+    panel.grid.major = element_line(color = "gray90", linewidth = 0.3),
+    panel.grid.minor = element_line(color = "gray95", linewidth = 0.2),
+    panel.border = element_rect(color = "gray50", fill = NA, linewidth = 0.5),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.margin = margin(15, 15, 15, 15)
+  )
+
+```
+
+The following density plots capture, team-by-team, shot and save accuracy and how this varies. My impression is this does not vary so much across teams, including between the best and weakest teams. What matters more is the number of shot attempts and preventing an opposing team from shooting.
+
+```{r}
+
+# Prepare data
+Acc <- df %>%
+  select(Team, ShotsAccuracy, SavesAccuracy) %>%
+  arrange(Team)
+
+teams <- unique(Acc$Team)
+
+plots <- lapply(seq_along(teams), function(i) {
+  team <- teams[i]
+  data <- Acc %>% filter(Team == team)
+  
+  shot_mean <- mean(data$ShotsAccuracy, na.rm = TRUE)
+  save_mean <- mean(data$SavesAccuracy, na.rm = TRUE)
+  
+  plot_data <- data %>%
+    pivot_longer(cols = c(ShotsAccuracy, SavesAccuracy),
+                 names_to = "Metric",
+                 values_to = "Accuracy")
+  
+  p <- ggplot(plot_data, aes(x = Accuracy, color = Metric)) +
+    geom_density(alpha = 0, linewidth = 1.2) +
+    geom_vline(xintercept = shot_mean, color = "#1976D2", alpha = 0.6, linewidth = 1) +
+    geom_vline(xintercept = save_mean, color = "#D32F2F", alpha = 0.6, linewidth = 1) +
+    annotate("text", x = shot_mean - 0.05, y = 3.8, 
+             label = round(shot_mean, 2), color = "#1976D2", 
+             vjust = 1, hjust = 1, size = 3, fontface = "bold", family = "roboto") +
+    annotate("text", x = save_mean + 0.05, y = 3.8, 
+             label = round(save_mean, 2), color = "#D32F2F", 
+             vjust = 1, hjust = 0, size = 3, fontface = "bold", family = "roboto") +
+    scale_color_manual(values = c("ShotsAccuracy" = "#1976D2", "SavesAccuracy" = "#D32F2F")) +
+    scale_x_continuous(limits = c(-0.5, 1.5), breaks = seq(0, 1.5, 0.5)) +
+    scale_y_continuous(limits = c(0, 4), breaks = seq(0, 4, 2)) +
+    labs(title = team) +
+    theme(base_family = "roboto") +
+    theme(
+      text = element_text(family = "roboto"),
+      legend.position = "none",
+      axis.title = element_blank(),
+      axis.text.x = element_text(size = 8, family = "roboto"),
+      axis.text.y = if (i %% 5 == 1) element_text(size = 8, family = "roboto") else element_blank(),
+      axis.ticks = element_line(color = "gray40", linewidth = 0.3),
+      panel.grid.major.y = element_line(color = "gray90", linewidth = 0.2),
+      panel.grid.major.x = element_blank(),
+      panel.grid.minor = element_blank(),
+      plot.title = element_text(hjust = 0.5, size = 10, face = "bold", family = "roboto"),
+      axis.line = element_line(color = "gray40", linewidth = 0.4),
+      plot.margin = margin(4, 4, 4, 4)
+    )
+  
+  return(p)
+})
+
+combined_plot <- wrap_plots(plots, ncol = 5, nrow = 4) +
+  plot_annotation(
+    title = "Shot / Save Accuracy",
+    subtitle = "Blue = Shots | Red = Saves | Vertical lines show means",
+    theme = theme(
+      plot.title = element_text(hjust = 0.5, size = 17, face = "bold", family = "roboto"),
+      plot.subtitle = element_text(hjust = 0.5, size = 11, family = "roboto", color = "gray40")
+    )
+  )
+combined_plot
+
+```
+
+# Discipline
+
+Discipline is another feature of performance. On these measures, there was nothing 'cynical' about Liverpool's performances or results. LFC's discipline and sportsmanship was high according to these standard measures.
+
+```{r}
+discipline <- df %>% 
+  select(Team, Fouls, YellowCard, RedCard, YellowRed) %>% 
+  group_by(Team) %>% 
+  summarise_at(vars(Fouls, YellowCard:YellowRed), funs(sum)) %>% 
+  arrange(Fouls) %>% 
+  mutate(TotCards = RedCard+YellowRed) 
+
+disp2 <- discipline %>%  
+  arrange(TotCards) %>% 
+  filter(Team %in% c("Chelsea", "Manchester United", "Burnley", "Liverpool", "Arsenal", "Manchester City"))
+
+ggplot(discipline, aes(x = Fouls, y = YellowCard, color = TotCards, size = TotCards)) +
+  geom_point(alpha = 0.7) +
+  geom_text_repel(data = disp2, 
+                  mapping = aes(x = Fouls, y = YellowCard, label = Team), 
+                  size = 3.5,
+                  box.padding = 0.5,
+                  point.padding = 0.3,
+                  segment.color = "grey50",
+                  segment.size = 0.3,
+                  max.overlaps = Inf,
+                  inherit.aes = FALSE) +
+  scale_color_gradient(low = "#E8DDB5", high = "#8B0000") +
+  scale_size_continuous(range = c(2, 8)) +
+  guides(size = "none") +
+  labs(title = "Premier League Discipline Analysis",
+       subtitle = "Relationship between Fouls and Yellow Cards",
+       x = "Number of Fouls",
+       y = "Yellow Cards",
+       color = "Total Cards against",
+       caption = "Point size represents number of cards received") +
+  theme(
+    plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+    plot.subtitle = element_text(size = 11, hjust = 0.5, color = "grey40"),
+    plot.caption = element_text(size = 9, color = "grey50", hjust = 1),
+    axis.title = element_text(face = "bold", size = 11),
+    legend.position = "right",
+    legend.title = element_text(face = "bold"),
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(color = "grey90", linewidth = 0.3)
+  )
+```
+
+# Manager of the Season
+
+The upshot of managerial success is to make a team more than the some of its parts. One possibility would be to capture team 'productivity' as a positive deviation from tyhe relation of points relative to wage bill (as a measure of 'inputs'). Our data do not include that wage bill (or total transfer spending) measure of inputs. Past evidence appears to suggest that managers do not add much value relative to wage bill (Kuper and Szymanski, *Soccernomics*).
+
+Without those measure of inputs, and limited by the available data, it is still possible to arrive at indicators of Jurgen Klopp's managerial prowess, including as an attacking force.
+
+```{r}
+df %>% 
+  select(Team_Logo, Team, Score, Offsides) %>% 
+  group_by(Team_Logo, Team) %>% 
+  summarise(
+    Score = sum(Score, na.rm = TRUE),
+    Offsides = sum(Offsides, na.rm = TRUE),
+    .groups = "drop"
+  ) %>% 
+  ggplot(aes(x = Offsides, y = Score)) +
+  geom_image(aes(image = Team_Logo), size = 0.065) +
+  scale_x_continuous(expand = expansion(mult = 0.12)) +
+  scale_y_continuous(expand = expansion(mult = 0.12)) +
+  labs(
+    title = "Goals Scored vs Offsides",
+    subtitle = "Premier League 2019/20 Season",
+    x = "Total Offsides",
+    y = "Total Goals Scored"
+  ) +
+  theme(base_family = "roboto") +
+  theme(
+    text = element_text(family = "roboto"),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5, family = "roboto"),
+    plot.subtitle = element_text(size = 11, hjust = 0.5, family = "roboto", color = "gray40"),
+    axis.title = element_text(size = 12, face = "bold", family = "roboto"),
+    axis.text = element_text(size = 11, family = "roboto"),
+    axis.line = element_line(color = "gray40", linewidth = 0.5),
+    axis.ticks = element_line(color = "gray40", linewidth = 0.3),
+    panel.grid.major = element_line(color = "gray90", linewidth = 0.3),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "gray50", fill = NA, linewidth = 0.5),
+    plot.margin = margin(15, 15, 15, 15)
+  )
+```
+
+```{r}
+# Calculate season averages
+season_avg_score <- df %>% 
+  group_by(Team) %>% 
+  summarise(Score = sum(Score)) %>% 
+  pull(Score) %>% 
+  mean()
+
+season_avg_accuracy <- df %>% 
+  summarise(ShotsAccuracy = mean(ShotsAccuracy, na.rm = TRUE)) %>% 
+  pull(ShotsAccuracy)
+
+# Filter teams with single manager
+teams <- df %>% 
+  group_by(Team) %>% 
+  summarise(L = length(unique(Manager))) %>% 
+  ungroup() %>% 
+  filter(L == 1) %>% 
+  pull(Team)
+
+# Create plot
+df %>% 
+  filter(Team %in% teams) %>% 
+  group_by(Manager, Team) %>% 
+  summarise(
+    Score = sum(Score),
+    ShotsAccuracy = mean(ShotsAccuracy, na.rm = TRUE),
+    .groups = "drop"
+  ) %>% 
+  ggplot(aes(x = Score, y = ShotsAccuracy, label = paste0(Manager, " (", Team, ")"))) +
+  # Quadrant backgrounds
+  annotate("rect", xmin = 20, xmax = season_avg_score, 
+           ymin = 0.275, ymax = season_avg_accuracy, 
+           fill = "#FFCDD2", alpha = 0.3) +
+  annotate("rect", xmin = season_avg_score, xmax = 110, 
+           ymin = season_avg_accuracy, ymax = 0.4, 
+           fill = "#C8E6C9", alpha = 0.4) +
+  annotate("rect", xmin = 20, xmax = season_avg_score, 
+           ymin = season_avg_accuracy, ymax = 0.4, 
+           fill = "#FFF9C4", alpha = 0.3) +
+  annotate("rect", xmin = season_avg_score, xmax = 110, 
+           ymin = 0.275, ymax = season_avg_accuracy, 
+           fill = "#FFF9C4", alpha = 0.3) +
+  # Reference lines
+  geom_hline(yintercept = season_avg_accuracy, linetype = "dashed", 
+             color = "gray40", linewidth = 0.8) +
+  geom_vline(xintercept = season_avg_score, linetype = "dashed", 
+             color = "gray40", linewidth = 0.8) +
+  # Season average point
+  geom_point(aes(x = season_avg_score, y = season_avg_accuracy), 
+             size = 5, color = "#F57C00", shape = 21, fill = "white", stroke = 2) +
+  annotate("text", x = season_avg_score + 4, y = season_avg_accuracy + 0.006, 
+           label = "Season Average", color = "gray20", size = 4, 
+           hjust = 0, fontface = "bold", family = "roboto") +
+  # Data points
+  geom_point(size = 4, alpha = 0.7, color = "#2D5F4F") +
+  geom_text_repel(
+    size = 3.5,
+    family = "roboto",
+    box.padding = 0.5,
+    point.padding = 0.3,
+    segment.color = "gray50",
+    segment.size = 0.3,
+    max.overlaps = Inf,
+    min.segment.length = 0
+  ) +
+  scale_x_continuous(limits = c(20, 110), 
+                     breaks = seq(20, 110, 15),
+                     expand = expansion(mult = 0.05)) +
+  scale_y_continuous(limits = c(0.275, 0.4),
+                     labels = scales::percent_format(accuracy = 0.1),
+                     breaks = seq(0.28, 0.40, 0.02),
+                     expand = expansion(mult = 0.02)) +
+  labs(
+    title = "Manager Performance: Goals vs Shot Accuracy",
+    subtitle = "Teams with single manager only | Green quadrant = above average on both metrics",
+    x = "Total Goals Scored",
+    y = "Average Shot Accuracy"
+  ) +
+  theme(base_family = "roboto") +
+  theme(
+    text = element_text(family = "roboto"),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5, family = "roboto"),
+    plot.subtitle = element_text(size = 10, hjust = 0.5, family = "roboto", color = "gray40"),
+    axis.title = element_text(size = 12, face = "bold", family = "roboto"),
+    axis.text = element_text(size = 11, family = "roboto", color = "gray30"),
+    axis.line = element_line(color = "gray40", linewidth = 0.5),
+    axis.ticks = element_line(color = "gray40", linewidth = 0.3),
+    panel.grid.major = element_line(color = "gray90", linewidth = 0.3),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "gray50", fill = NA, linewidth = 0.5),
+    plot.margin = margin(15, 15, 15, 15)
+  )
+
+
+```
+
+# Conclusions
+
+Data analysis is so very enjoyable and only more so when it reminds me of Liverpool's stunning 2019/20 season. YNWA.

@@ -1,0 +1,562 @@
+---
+title: "UK: A Fiscal Overview"
+author: "Leon Benito"
+date: today
+date-format: "MMMM D, YYYY"
+format:
+  pdf:
+    pdf-engine: xelatex
+    include-in-header:
+      text: |
+        \usepackage{lmodern}
+execute:
+  warning: false
+  message: false
+  results: hide
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+lapply(
+  c(
+    'here',
+    'tidyverse',
+    'data.table',
+    'readxl',
+    'openxlsx',
+    'broom',
+    'janitor',
+    'stringi',
+    #'MacrobondAPI','Rblpapi',
+    'ggridges',
+    'ggsci',
+    'parallel',
+    'glue',
+    'stringr',
+    'tseries',
+    'seasonal',
+    'forecast',
+    'tsibble',
+    'xts',
+    'zoo',
+    'gtsummary',
+    'gtExtras',
+    'latex2exp',
+    'stargazer',
+    'sysfonts',
+    'showtext',
+    'patchwork',
+    'ggrepel'
+  ),
+  require,
+  character.only = TRUE
+)
+
+# settings
+date.range <- '19800101/'
+
+sysfonts::font_add_google("Roboto Condensed", "Roboto Condensed")
+showtext::showtext_auto()
+
+theme_set(
+  theme_bw(base_size = 11, base_family = "Roboto Condensed") +
+    theme(
+      text = element_text(family = "Roboto Condensed", size = 11),
+      panel.background = element_rect(fill = "white"),
+      panel.grid.major = element_line(linewidth = .5),
+      panel.grid.minor = element_blank(),
+      axis.text = element_text(color = "dodgerblue"),
+      legend.position = c(.45, .2)
+    )
+)
+
+
+
+```
+
+# Evolving official sector views of the UK's fiscal position
+
+How the volume of UK public debt evolves over time reflects the accumulation of its borrowing decisions, when faced with economic shocks affecting the economy's growth rate and interest rates on its debt.
+
+The Office for Budget Responsibility (OBR) has reported on the sustainability of UK public finances since it was formed in 2010. I draw on how official forecasts have evolved over time, even preceding the formation fo the OBR, to summarise how official HM Teasury and OBR views of the UK's fiscal position have evolved - beginning with public debt and public borrowing.
+
+```{r, successive-psnd, echo=FALSE}
+
+forecasts.obr <- "Historical_official_forecasts_database_Autumn_2025-1.xlsx"
+#match labels on fiscal events
+policy.measures <- "Policy_Measures_Database_November_2025_.xlsx"
+Budget.match <- "matching_measures_obr_forecast_history.xlsx"
+
+#+ Specify Forecast variables [within forecasts.obr]
+fcastvar <- c("PSNB", "PSND", "NGDP", "UKGDP", "Outputgap", "Debtint")
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Budgets
+#+++++++++
+Budget.match <- read_excel(
+  here('data', Budget.match),
+  sheet = "Sheet1",
+  skip = 1
+) %>%
+  data.table(.) %>%
+  select(1:5) %>%
+  mutate(
+    official_forecast = as.Date(
+      paste(official_forecast, "01"),
+      format = "%B %Y %d"
+    ),
+    fiscal_event_date = as.Date(fiscal_event_date)
+  )
+
+# Policy Measures
+#+++++++++++++++++++++
+measures <- read_excel(
+  here('data', policy.measures), # available from Budget 2010 No.2
+  sheet = "Borrowing Summary",
+  skip = 1
+) %>%
+  data.table(.) # sheet: Aggregates £mn
+# Clean 'measures',
+measures <- measures |>
+  clean_names() |>
+  fill(fiscal_event) |>
+  rename_with(~ ifelse(seq_along(.) > 2, substr(., 1, 5), .), everything()) |>
+  type_convert()
+
+# merge Budget dates
+measures <- merge(measures, Budget.match, by = "fiscal_event", all = T) |>
+  arrange(fiscal_event_date) |>
+  filter(!is.na(category))
+
+# Historical fcasts
+#+++++++++++++++++++++
+read_sheets <- function(sheet_name) {
+  readxl::read_excel(
+    here('data', forecasts.obr), # Historic Official Forecasts Database
+    sheet = sheet_name,
+    skip = 3
+  ) %>%
+    data.table(.) %>%
+    head(-3) %>%
+    janitor::clean_names() %>%
+    janitor::remove_empty(which = "cols") %>%
+    janitor::remove_empty(which = "rows") %>%
+    rename_with(~ ifelse(seq_along(.) > 1, substr(., 1, 5), .), everything()) |>
+    type_convert()
+}
+forecasts <- set_names(map(fcastvar, read_sheets), fcastvar)
+# Clean each df then apply to list
+forecasts <- lapply(forecasts, function(df) {
+  df |>
+    mutate(across(where(is.numeric), ~ round(., 1))) %>% # round the list of dataframes
+    rename(official_forecast = 1) %>%
+    mutate(
+      official_forecast = as.Date(
+        paste(official_forecast, "01"),
+        format = "%B %Y %d"
+      )
+    )
+})
+# remove NAs
+forecasts <- lapply(forecasts, function(df) {
+  subset(df, !is.na(official_forecast))
+})
+# merge Budget dates into each forecast sheet
+forecasts <- lapply(forecasts, function(df) merge(df, Budget.match))
+
+#+++++++++++++++++++++++++++++++++++++++++++
+# Pivot_longer: 'Measures' and 'Forecasts'
+#+++++++++++++++++++++++++++++++++++++++++++
+# Policy Measures
+#+++++++++++++++++++
+measures.long <- measures |>
+  pivot_longer(
+    cols = starts_with("x"),
+    names_to = "year",
+    names_prefix = "x",
+    values_to = "effect"
+  ) |>
+  mutate(year = as.numeric(year), n = row_number()) |>
+  group_by(fiscal_event) |>
+  mutate(yr.min = min(ifelse(!is.na(effect), year, Inf))) |>
+  ungroup() |>
+  mutate(
+    greyed = if_else(year > yr.min + 5, 1, 0),
+    effect = if_else(greyed == 1, NA, effect)
+  ) |>
+  select(!c(n:greyed))
+
+#++++++++++++++++++++++++++++++++++
+# forecasts db [a list of df's] pivot_longer
+#++++++++++++++++++++++++++++++++++
+forecasts <- map(forecasts, as.data.frame)
+longer <- function(df) {
+  pivot_longer(
+    df,
+    cols = starts_with("x"),
+    names_to = "year",
+    names_prefix = "x",
+    values_drop_na = TRUE,
+    values_to = "forecast"
+  ) |>
+    mutate(year = as.numeric(year))
+}
+forecasts.long <- lapply(forecasts, longer)
+
+# merge NGDP forecasts into Measures and normalise
+measures.long <- measures.long |>
+  merge(forecasts.long[["NGDP"]]) |> # £bn
+  rename(NGDP = forecast) |>
+  arrange(fiscal_event_date)
+
+measures.long <- measures.long |> # £mn
+  mutate(effect.ngdp = ((100 / 1000) * effect) / NGDP) # % GDP
+
+# PLOT: Successive PSNB Forecasts----
+
+n_vintages <- nlevels(forcats::fct_drop(factor(
+  forecasts.long[["PSNB"]]$official_forecast
+)))
+
+plot.psnb <- forecasts.long[["PSNB"]] |>
+  mutate(
+    official_forecast = factor(
+      format(official_forecast, "%b %Y"),
+      levels = format(sort(unique(official_forecast)), "%b %Y")
+    )
+  ) |>
+  mutate(
+    highlight = case_when(
+      official_forecast == levels(official_forecast)[1] ~ "earliest",
+      official_forecast == levels(official_forecast)[n_vintages] ~ "latest",
+      TRUE ~ "other"
+    )
+  ) |>
+  ggplot(aes(
+    x = year,
+    y = forecast,
+    group = official_forecast,
+    colour = highlight,
+    alpha = highlight,
+    linewidth = highlight
+  )) +
+  geom_line() +
+  geom_point(size = 1.2) +
+  scale_colour_manual(
+    values = c(
+      "earliest" = "steelblue",
+      "other" = "grey70",
+      "latest" = "darkred"
+    )
+  ) +
+  scale_alpha_manual(values = c("earliest" = 1, "other" = 0.4, "latest" = 1 )) +
+  scale_linewidth_manual(
+    values = c("earliest" = 1.2, "other" = 0.5, "latest" = 1.2)
+  ) +
+  guides(alpha = "none", linewidth = "none") +
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 8)) +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed",
+    colour = "black",
+    linewidth = 0.4
+  ) +
+  theme(legend.position = "bottom", panel.grid.minor = element_blank()) +
+  labs(
+    title = "Public borrowing (PSNB) Forecasts",
+    x = NULL,
+    y = "PSNB (% GDP)",
+    colour = NULL
+  )
+
+# PLOT: Public Sector Net Debt forecasts----
+
+n_vintages <- nlevels(forcats::fct_drop(factor(
+  forecasts.long[["PSND"]]$official_forecast
+)))
+
+plot.psnd <- forecasts.long[["PSND"]] |>
+  mutate(
+    official_forecast = factor(
+      format(official_forecast, "%b %Y"),
+      levels = format(sort(unique(official_forecast)), "%b %Y")
+    )
+  ) |>
+  mutate(
+    highlight = case_when(
+      official_forecast == levels(official_forecast)[1] ~ "earliest",
+      official_forecast == levels(official_forecast)[n_vintages] ~ "latest",
+      TRUE ~ "other"
+    )
+  ) |>
+  ggplot(aes(
+    x = year,
+    y = forecast,
+    group = official_forecast,
+    colour = highlight,
+    alpha = highlight,
+    linewidth = highlight
+  )) +
+  geom_line() +
+  geom_point(size = 1.2) +
+  scale_colour_manual(
+    values = c(
+      "earliest" = "steelblue",
+      "other" = "grey70",
+      "latest" = "darkred"
+    )
+  ) +
+  scale_alpha_manual(values = c("earliest" = 1, "other" = 0.4, "latest" = 1)) +
+  scale_linewidth_manual(
+    values = c("earliest" = 1.2, "other" = 0.5, "latest" = 1.2 )
+  ) +
+  guides(alpha = "none", linewidth = "none") +
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 8)) +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed",
+    colour = "black",
+    linewidth = 0.4
+  ) +
+  theme(legend.position = "bottom", panel.grid.minor = element_blank()) +
+  labs(
+    title = "Official Public Sector Net Debt Forecasts",
+    x = NULL,
+    y = "Net Debt (% GDP)",
+    colour = NULL
+  )
+
+# PLOT: Public Sector Interest Payments forecasts----
+
+n_vintages <- nlevels(forcats::fct_drop(factor(
+  forecasts.long[["Debtint"]]$official_forecast
+)))
+
+plot.interest <- forecasts.long[["Debtint"]] |>
+  mutate(
+    official_forecast = factor(
+      format(official_forecast, "%b %Y"),
+      levels = format(sort(unique(official_forecast)), "%b %Y")
+    )
+  ) |>
+  mutate(
+    highlight = case_when(
+      official_forecast == levels(official_forecast)[1] ~ "earliest",
+      official_forecast == levels(official_forecast)[n_vintages] ~ "latest",
+      TRUE ~ "other"
+    )
+  ) |>
+  ggplot(aes(
+    x = year,
+    y = forecast,
+    group = official_forecast,
+    colour = highlight,
+    alpha = highlight,
+    linewidth = highlight
+  )) +
+  geom_line() +
+  geom_point(size = 1.2) +
+  scale_colour_manual(
+    values = c(
+      "earliest" = "steelblue",
+      "latest" = "darkred",
+      "other" = "grey70"
+    )
+  ) +
+  scale_alpha_manual(values = c("earliest" = 1, "latest" = 1, "other" = 0.4)) +
+  scale_linewidth_manual(
+    values = c("earliest" = 1.2, "latest" = 1.2, "other" = 0.5)
+  ) +
+  guides(alpha = "none", linewidth = "none") +
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 8)) +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed",
+    colour = "black",
+    linewidth = 0.4
+  ) +
+  theme(legend.position = "bottom", panel.grid.minor = element_blank()) +
+  labs(
+    title = "Official Debt Interest Forecasts",
+    x = NULL,
+    y = "Debt Interest (£bn)",
+    colour = NULL
+  )
+
+plot.psnd
+
+```
+
+Since the global financial crisis (GFC) in 2007/08, as trend UK growth weakened, the UK has faced a long-lasting fiscal challenge. This challenge has involved lowering the fiscal deficit to stabilise the public debt to GDP ratio. Since the Covid-19 pandemic and burst of inflation it has also been necessary to do that amid higher interest rates on debt.
+
+```{r, successive-psnb, echo=FALSE}
+plot.psnb
+
+```
+
+Several of those features are illustrated in the following charts. I use the evolution fo official forecasts as a way of showing how views and expectations for these key features have evolved.
+
+# The required fiscal position has become more challenging
+
+Public finance decisions are best summarised by looking at the evolution of the primary balance, which is annual public borrowing excluding interest payments. This is the measure of public borrowing that spending and tax decisions control, although those decisions need to take account of the interest rate environment, as I show below.
+
+The primary balance required to stabilise the public debt to GDP ratio depends on the growth rate of the economy and the interest rate on public debt. The following table shows how the required primary balance to stabilise the public debt to GDP ratio has evolved for different combinations of growth and interest rates.
+
+**Required, Debt-stabilising, Primary Balance (% GDP)**.
+
+*effective nominal interest rate, r*
+
+```{r, required-balance-r-g, echo=FALSE}
+
+sfa <- 0 # implicitly assumed, so ignored
+
+# set up range for r and g
+r <- seq(1.5, 4.5, 0.5)
+g <- seq(2.0, 4.0, 0.5)
+
+grid <- data.frame(expand.grid(
+  r = r,
+  g = g,
+  d = 100
+))
+
+# debt stabilising primary balance
+grid <- grid |>
+  mutate(pb = (((r / 100) - (g / 100)) / (1 + (g / 100))) * d)
+
+# Pivot to create table
+dat <- grid |>
+  dplyr::select(r, g, pb) |>
+  pivot_wider(names_from = r, values_from = pb)
+
+# format dat
+gt.dat <- dat |>
+  gt() |>
+  fmt_number(
+    decimals = 2
+  ) |>
+  fmt_number(
+    columns = g,
+    decimals = 1
+  ) |>
+  tab_options(
+    table.font.size = "small"
+  ) |>
+  data_color(
+    columns = -g,
+    method = "numeric",
+    palette = "inferno",
+    direction = "column",
+    reverse = TRUE
+  ) |>
+  cols_label(
+    g = md("**g**")
+  ) |>
+  tab_footnote(
+    footnote = "Note: Calculations assume Debt/GDP at 100% and no stock-flow adjustments, for different combinations of 'r' and 'g'.",
+    placement = "left"
+  )
+
+gt.dat
+
+```
+
+The key point from the table is that, since the financial crisis, a slowing in UK growth and a more recent rise in interest rates have made it more difficult to stabilise the public debt to GDP ratio -- the required primary balance has increased.
+
+The UK has shifted from the bottom/left part of this table -- when the average nominal growth rate was around 4% and the effective nominal interest rate was around 2.5-3.0% towards the middle/right part of the table. While a primary deficit around 1.0-1.5% used to be sufficient to stabilise the public debt to GDP ratio, now an ongoing primary surplus around 1% of GDP is required.
+
+That captures the sense in which the UK's required fiscal position has become more challenging.
+
+# A dramatic increase in annual interest payments on the public debt
+
+As the Debt ratio has increased over time and, more recently, interest rates have risen, the interest payments on the public debt have also increased. The following chart shows how the OBR's forecasts for interest payments have shifted higher over time.
+
+Whereas the UK used to expect annual interest payments around £40-50bn between 2010 and 2020, forecasts since 2022, and the onset of Covid-19 and the Russian invasion of Ukraine have seen these jump higher to over £100bn per year.
+
+```{r, successive-interest-payments-forecasts, echo=FALSE}
+plot.interest
+
+```
+
+# Fiscal choices at fiscal events
+
+Public finance choices are made by the Chancellor at national fiscal events, including the annual Budget.
+
+The chart below summarises different fiscal choices at each fiscal event -- either to tighten or loosen fiscal policy -- and relates those choices to the macro news affecting the fiscal position at that event.
+
+```{r, fiscal-events, echo=FALSE}
+highlight <- "Oct-24"
+highlight2 <- "Mar-25"
+
+#====================================================
+# Policy Respoonses to Fiscal news
+#====================================================
+input.file <- 'Chapter_3_charts_and_tables_March_2025.xlsx' # C4.F
+responses <- read_excel(
+  here('data', input.file),
+  sheet = "C3.1",
+  skip = 25
+) |>
+  janitor::clean_names() |>
+  rename(event = 1)
+
+# recode event label
+responses$event <- paste0(
+  str_sub(responses$event, 1, 3),
+  "-",
+  str_sub(responses$event, -2)
+)
+
+# Plot
+responses.scatter <- ggplot(
+  responses,
+  aes(y = policy, x = underlying, label = event)
+) +
+  geom_point() +
+  geom_point(
+    data = subset(responses, event == highlight),
+    aes(x = underlying, y = policy),
+    color = "red",
+    size = 5.5,
+    shape = 15
+  ) +
+  geom_point(
+    data = subset(responses, event == highlight2),
+    aes(x = underlying, y = policy),
+    color = "darkgreen",
+    size = 5.5,
+    shape = 15
+  ) +
+  geom_smooth(
+    data = responses,
+    color = "tomato",
+    fill = "tomato",
+    method = MASS::rlm
+  ) +
+  geom_text_repel(size = 3.5) +
+  geom_vline(xintercept = 0.0, lty = 4, color = 'darkred', size = 2) +
+  geom_hline(yintercept = 0.0, lty = 4, color = 'darkred', size = 2) +
+  labs(
+    title = "Policy Responses to Fiscal Forecast Revisions",
+    subtitle = "Robust regression line",
+    x = "Pre-measures forecast revision, % GDP",
+    y = "Discretionary policy change (% GDP)",
+    caption = "Source: OBR"
+  )
+
+# Robust regression
+# robust_reg <- MASS::rlm(policy ~ underlying, data = responses)
+# summary(robust_reg) # summary of coefficients
+
+responses.scatter
+```
+
+The chart shows that fiscal choices have been made in response to macro news, with fiscal tightening more likely when the macro news is negative and loosening more likely when the macro news is positive. The result is a clear downward-sloped relationship between fiscal choices and macro news.
+
+There is, however, significant variation in fiscal choices for a given level of macro news. For example, the first Budget by Chancellor Reeves in October 2024 saw significant fiscal loosening at around 1% of GDP, reflecting a large boost to public spending, only partly funded by increased taxes. There had been little fiscal news at the time.
+
+The subsequent 2025 Spring Statement too back some of that fiscal loosening, with fiscal news at the time raising the borrowing forecast.
+
+Overall, policy space has become more limited over time owing both to a more challenging fiscal environment and fiscal choices that have tended to postpone fiscal tightening. The UK has less room to respond to future fiscal shocks.

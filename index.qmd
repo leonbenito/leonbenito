@@ -1,0 +1,9 @@
+---
+title: "Leon"
+---
+
+I am a budding Economist. I am interested in how the economy is evolving and enjoy combining data and statistics as a way of exploring that evolution of the economy.
+
+I am interesting in data science to expand my knowledge of [**macroeconomics**](Economics.html). I apply statistical analysis to explore my interest in [**sports analytics**](Sports.html) and am interested in [**design**](Design.html) because I want to understand how to build things that look good and work well.
+
+Here, you will find examples of my interest in each of these.

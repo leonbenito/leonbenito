@@ -1,0 +1,65 @@
+[
+  {
+    "objectID": "Lambda.html",
+    "href": "Lambda.html",
+    "title": "Lambda",
+    "section": "",
+    "text": "1 Introduction\nIn 2017, BoE Governor Mark Carney gave a speech titled ‘Lambda’ describing (i) how BoE interest rate policy had been confronted with a trade-off between returning inflation to the inflation target and stabilising output and (ii) how the Bank’s Monetary Policy Committee (MPC) confronted that trade-off.\nIn this note, I replicate and update parts of Governor Carney’s analysis. The period since Governor Carney’s 2017 speech has been marked by further episodes that imply a macro trade-off between reaching the inflation target and output stabilisation. The trade-off owes above all to factors that tend to raise inflation, while also opening up an output ‘gap’.\n\n\n2 The macro-data: BoE forecasts of Inflation and Output gaps\nEvery three months since being made independent of the Government in 1997, the Bank of England has published forecasts for how it expects the UK economy to evolve. These forecasts are published as part of the Bank’s Monetary Policy Report (previously, Inflation Report). There has been only one exception since 1997 – in May 2020, at the height of the Covid-19 pandemic.\nThe plots below show the succession of these BoE forecasts – for CPI inflation, the level of GDP and the unemployment rate. The charts can be used to constructive a narrative of the various factors that shaped UK economic performance through this period, as well as the gradual process of learning their impact – as perceived by the Bank of England.\n\n\nReading 42 sheets \n\n\n\n\n\n\n\n\n\nIn order to focus on the UK’s more recent experience, it is helpful to ‘zoom-in’ on the most recent macro forecasts, as shown below.\n\n\n\n\n\n\n\n\n\nHow are output gaps and inflation related to one another? The charts below give an indication, distinguishing three different phases:\n- pre-Global Financial Crisis (GFC), when inflation was close to target and output varied little around its potential level so the output gap was small;\n- Post-GFC and pre-Covid (2008-19), when inflation was close to target despite the estimated output gap varying significantly;\n- Covid-19 and post-pandemic when inflation rose significantly above target, with significant variation in the output gap.\nThere were different macro phases in this era of inflation targeting. Pre-financial crisis (pre-GFC), inflation and output gap variability was low (first panel, below); in the post-GFC period and the post-pandemic period negative supply shocks dominated, leading to an inverse relation between inflation and the output gap (second panel, below); demand shocks, perhaps including looser fiscal policy, appeared to dominate during the pandemic period with a positive association between inflation and the output gap.\n\n\n\n\n\n\n\n\n\nThe Lambda of Governor Carney’s speech refers to the relative weight the policymaker, such as the BoE, places on output stabilisation relative to inflation stabilisation. So this captures the central bank’s preferences, in the face of certain macro shocks.\nGovernor Carney suggested a ‘lambda’ of 0.1 was an approximate lower bound to that relative weight attached to output stabilisation. The ‘cone’ of combinations of forecast CPI inflation and forecast output gap between values of lambda of 0.1 and 1.0 might represent something like a desired combination of inflation and output gap.\n\n\n\n\n\n\n\n\n\n\n\n3 Conclusions\nThe most recent macro forecasts produced by the BoE placed the economy outside the cone shown in the chart above. That suggests more policy effort needed to push inflation upwards on a 2-year outlook for a given amount of slack, including with interest rate cuts. Alteratively, the BoE could simply be attempting to return inflation to target ona longer horizon than the 2-year interval shown."
+  },
+  {
+    "objectID": "Economics.html",
+    "href": "Economics.html",
+    "title": "Economics",
+    "section": "",
+    "text": "While my Economics training is at an early stage, I like to explore data to expand my understanding of the economy. Here, you will find several examples that combine macro with data science.\nMonetary Policy\nIn 2017, BoE Governor Mark Carney gave a speech titled ‘Lambda’ describing how BoE policy had been confronted with a trade-off between returning inflation to the inflation target and stabilising output and how the Bank’s Monetary Policy Committee (MPC) confronted that trade-off.\nIn this note, I replicate and update parts of Governor Carney’s analysis. The period since Governor Carney’s speech has been marked by further episodes that imply a macro trade-off between reaching the inflation target and output stabilisation.\nI draw on the fact that every three months since being made independent of the Government in 1997, the Bank of England has provided forecasts for how it expects the UK economy to evolve.\n\nData analysis of Lambda\n\nFiscal Policy\nThe UK faces an important fiscal challenge – to stabilise and bring down debt, provide good public services and support economic growth.\nSince its creation in 2010, the Office for Budget Responsibility (OBR) has produced forecasts of the UK macro economy alongside each major fiscal event, including Budget.\nIn this Note, I provide a simple overview of UK fiscal policy"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Leon",
+    "section": "",
+    "text": "I am a budding Economist. I am interested in how the economy is evolving and enjoy combining data and statistics as a way of exploring that evolution of the economy.\nI am interesting in data science to expand my knowledge of macroeconomics. I apply statistical analysis to explore my interest in sports analytics and am interested in design because I want to understand how to build things that look good and work well.\nHere, you will find examples of my interest in each of these."
+  },
+  {
+    "objectID": "Sports.html",
+    "href": "Sports.html",
+    "title": "Sports analytics",
+    "section": "",
+    "text": "Sports analytics is revolutionising sport, including football. It affects every aspect of getting the best sporting performances from a team by using statistical analysis: recruiting the best players and selecting the best team for each match, achieving peak fitness as well as on-the-field tactics – without losing the magic of each unique and spontaneous football match.\nLiverpool FC won the English Premiership in 2019/20 and in 2024/25, two of the greatest seasons ever."
+  },
+  {
+    "objectID": "Sports.html#some-analysis",
+    "href": "Sports.html#some-analysis",
+    "title": "Sports analytics",
+    "section": "Some analysis",
+    "text": "Some analysis\n\nPremier league 2019/20"
+  },
+  {
+    "objectID": "Design.html",
+    "href": "Design.html",
+    "title": "Design",
+    "section": "",
+    "text": "Design shapes how we experience the world. What Antony Gormley said about Art also applies to Design, it being “the means by which we communicate what it feels like to be alive.”\nHere, I collect several of my favourite examples of art and design.\nBuildings and Spaces\nThe Guggenheim museum, Bilbao, Spain.\nReina Sofia museum, Madrid, Spain.\nThe High Line, New York, USA.\nThe Alhambra, Granada, Spain.\nSculpture\nAnother Place, Crosby, Merseyside.\nGolden Boy of Pye Corner, London.\nEl Oso y El Madrono, Madrid, Spain.\nClothes\nTrainers by Adidas.\nPsylo, Camden."
+  },
+  {
+    "objectID": "EPL201920.html",
+    "href": "EPL201920.html",
+    "title": "Data Analysis and the English 2019/20 Premier League Season",
+    "section": "",
+    "text": "No statistical analysis can do justice to the excitement of the 2019/20 Premier League season. Without any coincidence, the season was won by Liverpool. Here, I analyse match data from every teams’ matches, capturing results, aspects of performance including both attack and defense, as well as discipline. Liverpool were unsurpassed in almost every dimension. On 99 points for the season, Liverpool, beat Manchester City by 18 points and the third and fourth placed teams by 33 points."
+  },
+  {
+    "objectID": "EPL201920.html#the-league-table",
+    "href": "EPL201920.html#the-league-table",
+    "title": "Data Analysis and the English 2019/20 Premier League Season",
+    "section": "4.1 The league table",
+    "text": "4.1 The league table\nThe measure of performance that ultimately matters is the position of the table at the end of the season. That said, the excitement is in the journey of getting there.\n\n\n\n\n\n\n\n\nPremier League 2019/20 Final Table\n\n\nPosition\nTeam\nPlayed\nWon\nDrawn\nLost\nGF\nGA\nGD\nPoints\n\n\n\n\n1\nLiverpool\n38\n32\n3\n3\n85\n33\n52\n99\n\n\n2\nManchester City\n38\n26\n3\n9\n102\n35\n67\n81\n\n\n3\nManchester United\n38\n18\n12\n8\n66\n36\n30\n66\n\n\n4\nChelsea\n38\n20\n6\n12\n69\n54\n15\n66\n\n\n5\nLeicester City\n38\n18\n8\n12\n67\n41\n26\n62\n\n\n6\nTottenham Hotspur\n38\n16\n11\n11\n61\n47\n14\n59\n\n\n7\nWolverhampton Wanderers\n38\n15\n14\n9\n51\n40\n11\n59\n\n\n8\nArsenal\n38\n14\n14\n10\n56\n48\n8\n56\n\n\n9\nSheffield United\n38\n14\n12\n12\n39\n39\n0\n54\n\n\n10\nBurnley\n38\n15\n9\n14\n43\n50\n-7\n54\n\n\n11\nSouthampton\n38\n15\n7\n16\n51\n60\n-9\n52\n\n\n12\nEverton\n38\n13\n10\n15\n44\n56\n-12\n49\n\n\n13\nNewcastle United\n38\n11\n11\n16\n38\n58\n-20\n44\n\n\n14\nCrystal Palace\n38\n11\n10\n17\n31\n50\n-19\n43\n\n\n15\nBrighton & Hove Albion\n38\n9\n14\n15\n39\n54\n-15\n41\n\n\n16\nWest Ham United\n38\n10\n9\n19\n49\n62\n-13\n39\n\n\n17\nAston Villa\n38\n9\n8\n21\n41\n67\n-26\n35\n\n\n18\nBournemouth\n38\n9\n7\n22\n40\n65\n-25\n34\n\n\n19\nWatford\n38\n8\n10\n20\n36\n64\n-28\n34\n\n\n20\nNorwich City\n38\n5\n6\n27\n26\n75\n-49\n21\n\n\n\n\n\n\n\n\n4.1.1 Attacking statistics\n\n\n\n\n\n\n\n\nAttacking Statistics, by Team\n\n\nPremier League 2019/20\n\n\nTeam\nShotsAccuracy\nSucShots\nNumofShots\n\n\n\n\nLiverpool\n0.391\n5.842\n15.395\n\n\nWest Ham United\n0.390\n4.132\n10.895\n\n\nTottenham Hotspur\n0.387\n4.079\n11.553\n\n\nManchester United\n0.381\n5.263\n13.895\n\n\nSouthampton\n0.378\n4.447\n13.079\n\n\nArsenal\n0.373\n3.789\n10.553\n\n\nManchester City\n0.346\n6.474\n19.211\n\n\nLeicester City\n0.346\n4.763\n14.026\n\n\nChelsea\n0.341\n5.526\n16.289\n\n\nEverton\n0.332\n4.079\n12.237\n\n\nBurnley\n0.324\n3.263\n10.105\n\n\nNewcastle United\n0.319\n3.342\n10.447\n\n\nSheffield United\n0.318\n2.868\n9.289\n\n\nAston Villa\n0.317\n3.842\n11.921\n\n\nCrystal Palace\n0.316\n3.053\n9.789\n\n\nNorwich City\n0.311\n3.263\n10.763\n\n\nWolverhampton Wanderers\n0.304\n3.737\n11.921\n\n\nBournemouth\n0.299\n3.053\n10.105\n\n\nWatford\n0.298\n3.000\n10.789\n\n\nBrighton & Hove Albion\n0.292\n3.605\n12.000"
+  },
+  {
+    "objectID": "EPL201920.html#shot-and-save-accuracy",
+    "href": "EPL201920.html#shot-and-save-accuracy",
+    "title": "Data Analysis and the English 2019/20 Premier League Season",
+    "section": "4.2 Shot and save accuracy",
+    "text": "4.2 Shot and save accuracy\nShot and save accuracy are standard measures in football sports analytics as an intermediate measure of how team performance.\n\n\n\n\n\n\n\n\nShot and Save Accuracy by Team\n\n\nPremier League 2019/20\n\n\nTeam\nShot Accuracy\nSave Accuracy\n\n\n\n\nLiverpool\n0.391\n0.619\n\n\nWest Ham United\n0.390\n0.696\n\n\nTottenham Hotspur\n0.387\n0.749\n\n\nManchester United\n0.381\n0.698\n\n\nSouthampton\n0.378\n0.623\n\n\nArsenal\n0.373\n0.743\n\n\nLeicester City\n0.346\n0.704\n\n\nManchester City\n0.346\n0.536\n\n\nChelsea\n0.341\n0.582\n\n\nEverton\n0.332\n0.596\n\n\nBurnley\n0.324\n0.691\n\n\nNewcastle United\n0.319\n0.721\n\n\nSheffield United\n0.318\n0.721\n\n\nAston Villa\n0.317\n0.577\n\n\nCrystal Palace\n0.316\n0.725\n\n\nNorwich City\n0.311\n0.631\n\n\nWolverhampton Wanderers\n0.304\n0.631\n\n\nBournemouth\n0.299\n0.623\n\n\nWatford\n0.298\n0.660\n\n\nBrighton & Hove Albion\n0.292\n0.670\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThe following density plots capture, team-by-team, shot and save accuracy and how this varies. My impression is this does not vary so much across teams, including between the best and weakest teams. What matters more is the number of shot attempts and preventing an opposing team from shooting."
+  }
+]

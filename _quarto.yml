@@ -1,0 +1,24 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  title: "Leon Benito"
+  navbar:
+    left:
+      - href: index.qmd
+      - href: Economics.qmd
+        text: Economics
+      - href: Sports.qmd
+        text: Sports
+      - href: Design.qmd
+        text: Design 
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
+
+editor: visual
+

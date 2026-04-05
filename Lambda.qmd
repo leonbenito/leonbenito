@@ -1,0 +1,86 @@
+---
+title: "Lambda"
+author: "Leon Benito"
+date: today
+date-format: "MMMM D, YYYY"
+format:
+  html:
+    toc: true
+    toc-location: left
+    number-sections: true
+    code-fold: true
+    code-tools: true
+    theme: spacelab
+    highlight-style: tango
+    embed-resources: true
+    fig-width: 9
+    fig-height: 4
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r setup}
+#| include: false
+
+invisible(lapply(c("tidyverse", "here", "janitor", "data.table", "readxl", "ggrepel", "patchwork", "knitr","gt", "gtExtras", "showtext", "rdbnomics", "glue", "ggsci"), 
+                 library, character.only = TRUE))
+
+font_add_google("Roboto Condensed", "roboto")
+showtext_auto()
+theme_set(theme(base_family = "roboto"))
+
+```
+
+# Introduction
+
+In 2017, BoE Governor Mark Carney gave a [speech titled 'Lambda'](https://www.bankofengland.co.uk/speech/2017/lambda) describing (i) how BoE interest rate policy had been confronted with a trade-off between returning inflation to the inflation target and stabilising output and (ii) how the Bank's Monetary Policy Committee (MPC) confronted that trade-off.
+
+In this note, I replicate and update parts of Governor Carney's analysis. The period since Governor Carney's 2017 speech has been marked by further episodes that imply a macro trade-off between reaching the inflation target and output stabilisation. The trade-off owes above all to factors that tend to raise inflation, while also opening up an output 'gap'. 
+
+# The macro-data: BoE forecasts of Inflation and Output gaps
+
+Every three months since being made independent of the Government in 1997, the [Bank of England](https://www.bankofengland.co.uk/) has published forecasts for how it expects the UK economy to evolve. These forecasts are published as part of the Bank's _Monetary Policy Report_ (previously, _Inflation Report_). There has been only one exception since 1997 -- in May 2020, at the height of the Covid-19 pandemic.
+
+The plots below show the succession of these BoE forecasts -- for CPI inflation, the level of GDP and the unemployment rate. The charts can be used to constructive a narrative of the various factors that shaped UK economic performance through this period, as well as the gradual process of learning their impact -- as perceived by the Bank of England.
+
+
+```{r}
+source("01_Lambda_setup_data.R")
+plots[[1]] + plots[[3]] + plots[[4]]
+
+```
+
+In order to focus on the UK's more recent experience, it is helpful to 'zoom-in' on the most recent macro forecasts, as shown below.
+
+
+```{r, zoom}
+plotsQ_zoom[[1]] + plotsQ_zoom[[3]] + plotsQ_zoom[[4]]
+
+```
+
+How are output gaps and inflation related to one another? The charts below give an indication, distinguishing three different phases:   
+- **pre-Global Financial Crisis (GFC)**, when inflation was close to target and output varied little around its potential level so the output gap was small;   
+- **Post-GFC and pre-Covid (2008-19)**, when inflation was close to target despite the estimated output gap varying significantly;   
+- **Covid-19 and post-pandemic** when inflation rose significantly above target, with significant variation in the output gap.   
+
+There were different macro phases in this era of inflation targeting. Pre-financial  crisis (pre-GFC), inflation and output gap variability was low (first panel, below); in the post-GFC period and the post-pandemic period negative supply shocks dominated, leading to an inverse relation between inflation and the output gap (second panel, below); demand shocks, perhaps including looser fiscal policy, appeared to dominate during the pandemic period with a positive association between inflation and the output gap.   
+
+```{r}
+p2
+
+```
+
+The Lambda of Governor Carney's speech refers to the relative weight the
+policymaker, such as the BoE, places on output stabilisation relative to inflation stabilisation. So this captures the central bank's preferences, in the face of certain macro shocks.
+
+Governor Carney suggested a 'lambda' of 0.1 was an approximate lower bound to that relative weight attached to output stabilisation. The 'cone' of combinations of forecast CPI inflation and forecast output gap between values of lambda of 0.1 and 1.0 might represent something like a desired combination of inflation and output gap.    
+
+```{r, fig.height=9}
+lambda
+```
+# Conclusions 
+
+The most recent macro forecasts produced by the BoE placed the economy outside the cone shown in the chart above. That suggests more policy effort needed to push inflation upwards on a 2-year outlook for a given amount of slack, including with interest rate cuts. Alteratively, the BoE could simply be attempting to return inflation to target ona longer horizon than the 2-year interval shown. 
+
