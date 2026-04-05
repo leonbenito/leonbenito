@@ -5,6 +5,8 @@ project:
 
 website:
   title: "Leon Benito"
+  site-url: "https://leonbenito.github.io/leonbenito/"
+  
   navbar:
     left:
       - href: index.qmd
