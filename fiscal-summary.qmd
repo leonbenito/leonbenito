@@ -4,11 +4,9 @@ author: "Leon Benito"
 date: today
 date-format: "MMMM D, YYYY"
 format:
-  pdf:
-    pdf-engine: xelatex
-    include-in-header:
-      text: |
-        \usepackage{lmodern}
+  html:
+    self-contained: false
+  pdf: default
 execute:
   warning: false
   message: false
@@ -72,11 +70,9 @@ theme_set(
     )
 )
 
-
-
 ```
 
-# Evolving official sector views of the UK's fiscal position
+# Evolving views of the UK's fiscal position
 
 How the volume of UK public debt evolves over time reflects the accumulation of its borrowing decisions, when faced with economic shocks affecting the economy's growth rate and interest rates on its debt.
 
